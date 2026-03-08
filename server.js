@@ -4,11 +4,13 @@ const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
+// Middleware
 app.use(express.json());
 app.use(express.static('public'));
 
+// Database Setup (SQLite)
 const db = new sqlite3.Database('./vcard.db', (err) => {
     if (err) {
         console.error('Error opening database', err.message);
@@ -31,6 +33,7 @@ const db = new sqlite3.Database('./vcard.db', (err) => {
     }
 });
 
+// 1. Create a new vCard entry
 app.post('/api/vcard', (req, res) => {
     const { name, job_title, company, phone, email, website, address, facebook, qr_color, bg_color } = req.body;
     const id = uuidv4();
@@ -46,6 +49,7 @@ app.post('/api/vcard', (req, res) => {
     });
 });
 
+// 2. Get vCard data for editing
 app.get('/api/vcard/:id', (req, res) => {
     const sql = `SELECT * FROM contacts WHERE id = ?`;
     db.get(sql, [req.params.id], (err, row) => {
@@ -59,6 +63,7 @@ app.get('/api/vcard/:id', (req, res) => {
     });
 });
 
+// 3. Update vCard data (Dynamic Editing)
 app.put('/api/vcard/:id', (req, res) => {
     const { name, job_title, company, phone, email, website, address, facebook, qr_color, bg_color } = req.body;
     const sql = `UPDATE contacts SET name=?, job_title=?, company=?, phone=?, email=?, website=?, address=?, facebook=?, qr_color=?, bg_color=? WHERE id=?`;
@@ -71,6 +76,7 @@ app.put('/api/vcard/:id', (req, res) => {
     });
 });
 
+// 4. Public View (When QR code is scanned)
 app.get('/vcard/:id', (req, res) => {
     const sql = `SELECT * FROM contacts WHERE id = ?`;
     db.get(sql, [req.params.id], (err, row) => {
@@ -96,6 +102,12 @@ END:VCARD`;
     });
 });
 
-app.listen(PORT, () => {
-    console.log(`🚀 Server running at http://localhost:${PORT}`);
-});
+// Vercel Serverless Handler
+module.exports = app;
+
+// For local testing
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running at http://localhost:${PORT}`);
+    });
+}
