@@ -102,7 +102,7 @@ END:VCARD`;
     });
 });
 
-// Vercel Serverless Handler
+// Railway Serverless Handler
 module.exports = app;
 
 // For local testing
